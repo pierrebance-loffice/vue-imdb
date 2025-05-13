@@ -18,10 +18,10 @@
             />
             <v-btn
               :icon="viewMode === 'grid' ? 'mdi-view-grid' : 'mdi-view-list'"
-              @click="toggleViewMode"
               variant="tonal"
               color="primary"
               :aria-label="viewMode === 'grid' ? 'Grid view' : 'List view'"
+              @click="toggleViewMode"
             />
           </div>
         </v-col>
@@ -55,7 +55,7 @@
         </template>
         <template v-else>
           <v-row>
-            <v-col cols="12" v-for="movie in paginatedMovies" :key="movie.id">
+            <v-col v-for="movie in paginatedMovies" :key="movie.id" cols="12">
               <MovieListItem :movie="movie" :genres="movie.genres" />
             </v-col>
           </v-row>
@@ -69,8 +69,8 @@
             v-model="uiPage"
             :length="totalUiPages"
             :total-visible="7"
-            @update:model-value="handleUiPageChange"
             class="mt-6"
+            @update:model-value="handleUiPageChange"
           />
         </v-col>
       </v-row>
@@ -105,12 +105,12 @@ function toggleViewMode() {
 
 // Calculate total UI pages based on total results and UI page size (no cap)
 const totalUiPages = computed(() =>
-  Math.ceil(moviesStore.totalResults / UI_PAGE_SIZE)
+  Math.ceil(moviesStore.totalResults / UI_PAGE_SIZE),
 );
 
 // Calculate which API page to fetch based on UI page
 const apiPage = computed(
-  () => Math.floor(((uiPage.value - 1) * UI_PAGE_SIZE) / API_PAGE_SIZE) + 1
+  () => Math.floor(((uiPage.value - 1) * UI_PAGE_SIZE) / API_PAGE_SIZE) + 1,
 );
 
 // Slice the movies for the current UI page

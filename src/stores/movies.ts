@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE, DEFAULT_SORT_BY } from "@/constants";
 import { discoverMovies, type Movie } from "@/services/api";
 import { defineStore } from "pinia";
 
@@ -15,13 +16,13 @@ export const useMoviesStore = defineStore("movies", {
     movies: [],
     loading: false,
     error: null,
-    currentPage: 1,
+    currentPage: DEFAULT_PAGE,
     totalPages: 0,
     totalResults: 0,
   }),
 
   actions: {
-    async fetchMovies(page = 1, sortBy = "popularity.desc") {
+    async fetchMovies(page = DEFAULT_PAGE, sortBy = DEFAULT_SORT_BY) {
       this.loading = true;
       this.error = null;
       try {

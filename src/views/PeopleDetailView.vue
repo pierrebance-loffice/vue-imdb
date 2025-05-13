@@ -1,5 +1,5 @@
 <template>
-  <div class="person-detail">
+  <div>
     <v-container>
       <v-row>
         <v-col cols="12">
@@ -18,17 +18,22 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-img
-          v-if="person?.profile_path"
-          :src="`https://image.tmdb.org/t/p/w500${person.profile_path}`"
-          :alt="person.name"
-          width="200"
-          height="300"
-          class="mb-2 align-start"
-          rounded
-        />
-
-        <v-col cols="12" md="8">
+        <div>
+          <v-img
+            v-if="person?.profile_path"
+            :src="`${IMAGE_BASE_URL_SMALL}${person.profile_path}`"
+            :alt="person.name"
+            width="200"
+            height="300"
+            class="mb-2 align-start image"
+            rounded
+            cover
+          />
+          <div v-else class="image-placeholder mb-1">
+            <v-icon size="48" color="grey">mdi-account</v-icon>
+          </div>
+        </div>
+        <v-col>
           <div class="mb-4 font-italic">
             <span v-if="person?.birthday">{{
               new Date(person.birthday).toLocaleString("fr-FR", {
@@ -41,7 +46,7 @@
               >, {{ person.place_of_birth }}</span
             >
           </div>
-          <div class="mb-2">
+          <div v-if="person?.biography" class="mb-2">
             <span class="font-weight-bold">Biographie - </span>
             <span>{{ person?.biography }}</span>
           </div>
@@ -53,34 +58,40 @@
               >Lien vers la page IMDB de la personne</a
             >
           </div>
-          <div v-if="person?.homepage">
-            <a
-              :href="person.homepage"
-              target="_blank"
-              class="text-primary text-decoration-underline"
-              >Lien vers la page de la personne</a
-            >
-          </div>
-          <v-row v-if="person?.images?.profiles?.length" class="mt-4">
+          <v-row v-if="person?.images?.length && !props.compact" class="mt-4">
             <v-col cols="12">
               <h3 class="text-h5 mb-2">Profile pictures</h3>
-              <div class="cast-grid">
-                <v-img
-                  v-for="(img, idx) in paginatedProfiles"
-                  :key="idx"
-                  :src="`https://image.tmdb.org/t/p/w300${img.file_path}`"
-                  width="100"
-                  height="150"
-                  class="mr-2 mb-2"
-                  rounded
-                />
+              <div class="pics">
+                <div
+                  v-for="picture in pictures"
+                  :key="picture.file_path"
+                  class="pics-card"
+                >
+                  <div class="pics-img-wrapper">
+                    <v-img
+                      v-if="picture.file_path"
+                      :src="`${IMAGE_BASE_URL_SMALL}${picture.file_path}`"
+                      width="100"
+                      height="150"
+                      class="mb-1 pics-image"
+                      rounded
+                      cover
+                    />
+                    <div v-else class="pics-placeholder mb-1">
+                      <v-icon size="48" color="grey">mdi-image-album</v-icon>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="d-flex justify-center align-center mt-4">
+              <div
+                v-if="totalProfilePages > 1"
+                class="d-flex justify-center align-center mt-4"
+              >
                 <v-btn
                   icon
                   :disabled="currentProfilePage === 1"
-                  @click="currentProfilePage--"
                   class="mr-2"
+                  @click="currentProfilePage--"
                 >
                   <v-icon>mdi-chevron-left</v-icon>
                 </v-btn>
@@ -90,8 +101,8 @@
                 <v-btn
                   icon
                   :disabled="currentProfilePage === totalProfilePages"
-                  @click="currentProfilePage++"
                   class="ml-2"
+                  @click="currentProfilePage++"
                 >
                   <v-icon>mdi-chevron-right</v-icon>
                 </v-btn>
@@ -100,54 +111,60 @@
           </v-row>
         </v-col>
       </v-row>
-      <v-row v-if="person?.movie_credits?.cast?.length">
+      <v-row v-if="person?.movie_credits?.cast?.length && !props.compact">
         <v-col cols="12">
           <div class="font-weight-bold text-h5 mb-2">Crédits</div>
-          <div
-            class="cast-grid"
-            style="
-              display: grid;
-              grid-template-columns: repeat(8, 1fr);
-              grid-template-rows: repeat(2, 1fr);
-              gap: 1rem;
-            "
-          >
+          <div class="credits">
             <div
-              v-for="credit in paginatedCredits"
-              :key="credit.id"
-              class="cast-card"
+              v-for="movie in paginatedCredits"
+              :key="movie.id"
+              class="credits-card"
+              style=""
+              @click="openMovieModal(movie.id)"
             >
-              <v-img
-                v-if="credit.poster_path"
-                :src="`https://image.tmdb.org/t/p/w185${credit.poster_path}`"
-                :alt="credit.title || credit.name"
-                width="100"
-                height="150"
-                class="mb-1 cast-image"
-                rounded
-              />
-              <div class="text-center text-caption font-weight-medium">
-                {{ credit.title || credit.name }}
+              <div class="credits-img-wrapper">
+                <v-img
+                  v-if="movie.poster_path"
+                  :src="`${IMAGE_BASE_URL_SMALL}${movie.poster_path}`"
+                  :alt="movie.title || movie.name"
+                  width="100"
+                  height="150"
+                  class="mb-1 credits-image"
+                  rounded
+                  cover
+                />
+                <div v-else class="credits-placeholder mb-1">
+                  <v-icon size="48" color="grey">mdi-movie</v-icon>
+                </div>
+              </div>
+
+              <div
+                class="text-center text-caption font-weight-medium credits-text"
+              >
+                {{ movie.title || movie.name }}
               </div>
             </div>
           </div>
-          <div class="d-flex justify-center align-center mt-4">
+          <div
+            v-if="totalPages > 1"
+            class="d-flex justify-center align-center mt-4"
+          >
             <v-btn
               icon
-              :disabled="currentCreditPage === 1"
-              @click="currentCreditPage--"
+              :disabled="currentPage === 1"
               class="mr-2"
+              @click="currentPage--"
             >
               <v-icon>mdi-chevron-left</v-icon>
             </v-btn>
             <span class="text-caption">
-              {{ currentCreditPage }} / {{ totalCreditPages }}
+              {{ currentPage }} / {{ totalPages }}
             </span>
             <v-btn
               icon
-              :disabled="currentCreditPage === totalCreditPages"
-              @click="currentCreditPage++"
+              :disabled="currentPage === totalPages"
               class="ml-2"
+              @click="currentPage++"
             >
               <v-icon>mdi-chevron-right</v-icon>
             </v-btn>
@@ -165,83 +182,223 @@
         </v-col>
       </v-row>
     </v-container>
+    <Modal
+      :dialog="showMovieModal"
+      :navigate-to="`/movies/${movieId}`"
+      :navigate-label="`Lien vers la page du film`"
+      @close="closeMovieModal"
+      @navigate="(path: string) => router.push(path)"
+    >
+      <MovieDetailView
+        v-if="movieId"
+        :id="movieId"
+        :key="movieId"
+        compact
+        @close="closeMovieModal"
+      />
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { IMAGE_BASE_URL_SMALL } from "@/constants";
+import { Person } from "@/types";
+import { computed, defineProps, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import Modal from "../components/Modal.vue";
+import MovieDetailView from "./MovieDetailView.vue";
 
 const route = useRoute();
-const person = ref<any>(null);
+const router = useRouter();
+const person = ref<Person | null>(null);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 const currentProfilePage = ref(1);
 const profilesPerPage = 6;
 
-const totalProfilePages = computed(() =>
-  person.value?.images?.profiles
-    ? Math.ceil(person.value.images.profiles.length / profilesPerPage)
-    : 1
-);
-
-const paginatedProfiles = computed(() => {
-  if (!person.value?.images?.profiles) return [];
-  const start = (currentProfilePage.value - 1) * profilesPerPage;
-  return person.value.images.profiles.slice(start, start + profilesPerPage);
+const totalProfilePages = computed(() => {
+  return person.value?.images
+    ? Math.ceil(person.value.images.length / profilesPerPage)
+    : 1;
 });
 
-// Credits pagination
-const currentCreditPage = ref(1);
-const creditsPerPage = 16;
+const pictures = computed(() => {
+  if (!person.value?.images) return [];
+  const start = (currentProfilePage.value - 1) * profilesPerPage;
+  return person.value.images.slice(start, start + profilesPerPage);
+});
 
-const totalCreditPages = computed(() =>
+const currentPage = ref(1);
+const itemsPerPage = 6;
+
+const totalPages = computed(() =>
   person.value?.movie_credits?.cast
-    ? Math.ceil(person.value.movie_credits.cast.length / creditsPerPage)
-    : 1
+    ? Math.ceil(person.value.movie_credits.cast.length / itemsPerPage)
+    : 1,
 );
 
 const paginatedCredits = computed(() => {
   if (!person.value?.movie_credits?.cast) return [];
-  const start = (currentCreditPage.value - 1) * creditsPerPage;
-  return person.value.movie_credits.cast.slice(start, start + creditsPerPage);
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return person.value.movie_credits.cast.slice(start, end);
 });
+
+const showMovieModal = ref(false);
+const movieId = ref<string | null>(null);
+
+function openMovieModal(id: number) {
+  router.push({
+    name: "movie-modal",
+    params: { id: route.params.personId, movieId: id },
+  });
+}
+
+const closeMovieModal = () => {
+  showMovieModal.value = false;
+  movieId.value = null;
+  router.replace({ name: "people-detail", params: { id: route.params.id } });
+};
+
+watch(
+  () => route.fullPath,
+  () => {
+    const match = route.name === "movie-modal" && route.params.movieId;
+    if (match) {
+      movieId.value = route.params.movieId as string;
+      showMovieModal.value = true;
+    } else {
+      showMovieModal.value = false;
+      movieId.value = null;
+    }
+  },
+  { immediate: true },
+);
 
 onMounted(async () => {
   try {
     const response = await fetch(
-      `http://localhost:3000/people/${route.params.id}`
+      `http://localhost:3000/api/v1/people/${route.params.personId}`,
     );
     if (!response.ok) throw new Error("Failed to fetch person details.");
     const data = await response.json();
     person.value = data;
-    console.log("person.value.movie_credits");
-    console.log(person.value.movie_credits.cast[0]);
-  } catch (e) {
+  } catch {
     error.value = "Failed to fetch person details.";
   } finally {
     loading.value = false;
   }
 });
+
+const props = defineProps({
+  id: {
+    type: [String, Number],
+    default: null,
+  },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
+});
 </script>
 
 <style scoped>
-.person-detail {
-  padding: 2rem 0;
+.image {
+  width: 200px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
 }
-.cast-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+.image-placeholder {
+  width: 200px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.pics {
+  display: flex;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 1rem;
+  margin-left: auto;
+  margin-right: auto;
 }
-.cast-card {
+.pics-card {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.cast-image {
+.pics-img-wrapper {
+  position: relative;
+  width: 100px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pics-image {
+  border-radius: 8px;
+  width: 100px;
+  height: 150px;
+}
+.pics-placeholder {
+  width: 100px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.credits {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.credits-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.credits-img-wrapper {
+  width: 100px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.credits-image {
+  border-radius: 8px;
+  width: 100px;
+  height: 150px;
+}
+.credits-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+.credits-placeholder {
+  width: 100px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
   border-radius: 8px;
   overflow: hidden;
 }

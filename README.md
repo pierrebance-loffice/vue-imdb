@@ -1,68 +1,161 @@
 # IMDB POC - Vue Version
 
-This is a Vue.js version of the IMDB POC project. It demonstrates the use of Vue 3 with TypeScript, Vuetify, and Pinia for state management.
+A modern Vue.js application that demonstrates best practices in building a movie database interface. Built with Vue 3, TypeScript, Vuetify, and Pinia.
 
 ## Features
 
-- Vue 3 with Composition API
-- TypeScript support
-- Vuetify 3 for UI components
-- Pinia for state management
-- Vue Router for navigation
-- Tailwind CSS for styling
-- Axios for API requests
+- 🚀 Vue 3 with Composition API for better code organization and reusability
+- 📘 TypeScript for type safety and better developer experience
+- 🎨 Vuetify 3 for Material Design components and theming
+- 📦 Pinia for efficient state management
+- 🛣️ Vue Router with lazy loading for optimal performance
+- 🧪 Vitest and Testing Library for comprehensive testing
+- 📱 Responsive design for all screen sizes
 
-## Project Setup
+## Tech Stack
+
+- **Framework**: Vue 3.5
+- **Language**: TypeScript
+- **UI Library**: Vuetify 3.8
+- **State Management**: Pinia 3.0
+- **Routing**: Vue Router 4.5
+- **Testing**: Vitest, Vue Test Utils, Testing Library
+- **Build Tool**: Vite 6.3
+- **Package Manager**: pnpm
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- pnpm (v8 or higher)
+
+### Installation
 
 ```sh
-npm install
+# Clone the repository
+git clone <repository-url>
+
+# Navigate to project directory
+cd vue-imdb
+
+# Install dependencies
+pnpm install
 ```
 
-### Compile and Hot-Reload for Development
+### Development
 
 ```sh
-npm run dev
+# Start development server
+pnpm dev
+
+# Run type checking
+pnpm type-check
+
+# Run linting
+pnpm lint
+
+# Format code
+pnpm format
 ```
 
-### Type-Check, Lint and Format
+### Testing
 
 ```sh
-npm run type-check
-npm run lint
-npm run format
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
 ```
 
-### Build for Production
+### Production
 
 ```sh
-npm run build
-```
+# Build for production
+pnpm build
 
-### Preview Production Build
-
-```sh
-npm run preview
+# Preview production build
+pnpm preview
 ```
 
 ## Project Structure
 
-- `src/` - Source files
-  - `assets/` - Static assets
-  - `components/` - Vue components
-  - `router/` - Vue Router configuration
-  - `stores/` - Pinia stores
-  - `views/` - Page components
-  - `App.vue` - Root component
-  - `main.ts` - Application entry point
+```
+src/
+├── assets/          # Static assets (images, styles)
+├── components/      # Reusable Vue components
+│   ├── MovieCard.vue
+│   ├── MovieListItem.vue
+│   └── Modal.vue
+├── router/          # Vue Router configuration
+├── services/        # API services and utilities
+├── stores/          # Pinia stores
+├── types/           # TypeScript type definitions
+├── views/           # Page components
+│   ├── HomeView.vue
+│   ├── MovieDetailView.vue
+│   └── PeopleDetailView.vue
+├── App.vue          # Root component
+├── main.ts          # Application entry point
+├── constants.ts     # Application constants
+└── types.ts         # TypeScript interfaces
+```
 
 ## API Integration
 
-The application expects the following API endpoints:
+The application integrates with a movie database API. Key endpoints:
 
-- `/discover/movies` - Discover movies
-- `/movies/123` - Get movie details
-- `/people/123` - Get person details
+- `GET /discover/movies` - Discover movies with filtering and pagination
+- `GET /movies/:id` - Get detailed information about a specific movie
+- `GET /people/:id` - Get detailed information about a person
+
+## Component Documentation
+
+### MovieCard
+
+A card component that displays basic movie information including:
+
+- Poster image
+- Title
+- Release date
+- Rating
+
+### MovieListItem
+
+An alternative view for displaying movies in a list format, showing:
+
+- Thumbnail
+- Title
+- Overview
+- Release date
+
+### Modal
+
+A reusable modal component used for displaying:
+
+- Movie details
+- Person details
+- Any other modal content
+
+## State Management
+
+The application uses Pinia for state management with the following stores:
+
+- `movies` - Manages movie-related state and actions
+  - Movie list
+  - Selected movie
+  - Pagination
+  - Filters
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

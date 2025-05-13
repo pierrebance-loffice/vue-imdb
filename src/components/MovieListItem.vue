@@ -34,7 +34,7 @@
         </div>
         <div class="rating-row">
           <v-rating
-            :model-value="movie.vote_average / 2"
+            :model-value="(movie.vote_average ?? 0) / 2"
             readonly
             half-increments
             color="amber"
@@ -51,17 +51,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { IMAGE_BASE_URL } from "@/constants";
 import type { Movie } from "@/types";
+import { computed } from "vue";
 
+/**
+ * MovieListItem Component
+ *
+ * A horizontal list item component that displays movie information in a compact format.
+ * The item includes a thumbnail image, title, genres, and rating information.
+ *
+ * @component
+ * @example
+ * ```vue
+ * <MovieListItem :movie="movieData" />
+ * ```
+ */
 const props = defineProps<{
+  /** The movie data to display in the list item */
   movie: Movie;
 }>();
 
+/**
+ * Computed property that generates the poster image URL.
+ * Falls back to a placeholder image if no poster path is available.
+ *
+ * @computed
+ * @returns {string} The complete URL for the movie poster
+ */
 const posterUrl = computed(() =>
   props.movie.poster_path
-    ? `https://image.tmdb.org/t/p/w500${props.movie.poster_path}`
-    : "/placeholder.png"
+    ? `${IMAGE_BASE_URL}${props.movie.poster_path}`
+    : "/placeholder.png",
 );
 </script>
 
@@ -101,7 +122,7 @@ const posterUrl = computed(() =>
   gap: 8px;
 }
 .light-bg {
-  background-color: #f7f7f9;
+  background-color: var(--v-theme-background, #f7f7f9);
 }
 :deep(.v-theme--light) .light-bg {
   background-color: #f7f7f9 !important;

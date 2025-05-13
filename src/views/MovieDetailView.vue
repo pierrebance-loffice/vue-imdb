@@ -1,5 +1,5 @@
 <template>
-  <div class="movie-detail">
+  <div>
     <v-container>
       <v-row>
         <v-col cols="12">
@@ -24,17 +24,21 @@
         </v-col>
       </v-row>
       <v-row>
-        <v-col cols="12" md="4" class="d-flex flex-column align-center">
+        <div>
           <v-img
             v-if="movie?.poster_path"
-            :src="`https://image.tmdb.org/t/p/w500${movie.poster_path}`"
+            :src="`${IMAGE_BASE_URL}${movie.poster_path}`"
             :alt="movie.title"
-            width="260"
-            height="390"
+            width="200"
+            height="300"
             class="mb-2"
             rounded
+            cover
           />
-          <div class="rating-row mb-2">
+          <div v-else class="image-placeholder mb-1">
+            <v-icon size="48" color="grey">mdi-movie</v-icon>
+          </div>
+          <div v-if="movie?.vote_count" class="rating-row mb-2">
             <v-rating
               v-if="movie?.vote_average"
               :model-value="movie.vote_average / 2"
@@ -48,7 +52,7 @@
               >{{ movie?.vote_count }} votes</span
             >
           </div>
-        </v-col>
+        </div>
         <v-col cols="12" md="8">
           <div
             v-if="movie?.tagline"
@@ -57,7 +61,7 @@
           >
             {{ movie.tagline }}
           </div>
-          <div class="mb-2">
+          <div v-if="movie?.overview" class="mb-2">
             <span class="font-weight-bold">Résumé du film - </span>
             <span>{{ movie?.overview }}</span>
           </div>
@@ -94,26 +98,28 @@
           </div>
         </v-col>
       </v-row>
-      <v-row v-if="castWithDirector.length">
+      <v-row v-if="castWithDirector.length && !props.compact">
         <v-col cols="12">
           <div class="font-weight-bold text-h5 mb-2">Crédits</div>
-          <div class="cast-grid">
+          <div class="credits">
             <div
-              v-for="person in paginatedCast"
+              v-for="person in paginatedCredits"
               :key="person.id"
-              class="cast-card"
+              class="credits-card"
+              @click="openPersonModal(person.id)"
             >
-              <div class="cast-img-wrapper">
+              <div class="credits-img-wrapper">
                 <v-img
                   v-if="person.profile_path"
-                  :src="`https://image.tmdb.org/t/p/w185${person.profile_path}`"
+                  :src="`${IMAGE_BASE_URL_SMALL}${person.profile_path}`"
                   :alt="person.name"
                   width="100"
                   height="150"
-                  class="mb-1 cast-image"
+                  class="credits-image"
                   rounded
+                  cover
                 />
-                <div v-else class="placeholder-img mb-1">
+                <div v-else class="credits-placeholder mb-1">
                   <v-icon size="48" color="grey">mdi-account</v-icon>
                 </div>
                 <v-icon
@@ -124,17 +130,22 @@
                   >mdi-movie-open</v-icon
                 >
               </div>
-              <div class="text-center text-caption font-weight-medium">
+              <div
+                class="text-center text-caption font-weight-medium credits-text"
+              >
                 {{ person.name }}
               </div>
             </div>
           </div>
-          <div class="d-flex justify-center align-center mt-4">
+          <div
+            v-if="totalPages > 1"
+            class="d-flex justify-center align-center mt-4"
+          >
             <v-btn
               icon
               :disabled="currentPage === 1"
-              @click="currentPage--"
               class="mr-2"
+              @click="currentPage--"
             >
               <v-icon>mdi-chevron-left</v-icon>
             </v-btn>
@@ -144,8 +155,8 @@
             <v-btn
               icon
               :disabled="currentPage === totalPages"
-              @click="currentPage++"
               class="ml-2"
+              @click="currentPage++"
             >
               <v-icon>mdi-chevron-right</v-icon>
             </v-btn>
@@ -163,28 +174,46 @@
         </v-col>
       </v-row>
     </v-container>
+    <Modal
+      :dialog="showPersonModal"
+      :navigate-to="`/people/${personId}`"
+      :navigate-label="`Lien vers la page de la personne`"
+      @close="closePersonModal"
+      @navigate="(path) => router.push(path)"
+    >
+      <PeopleDetailView
+        v-if="personId"
+        :id="personId"
+        :key="personId"
+        compact
+        @close="closePersonModal"
+      />
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { IMAGE_BASE_URL, IMAGE_BASE_URL_SMALL } from "@/constants";
+import { Movie } from "@/types";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import Modal from "../components/Modal.vue";
+import PeopleDetailView from "./PeopleDetailView.vue";
 
 const route = useRoute();
-const movie = ref<any>(null);
+const router = useRouter();
+const movie = ref<Movie | null>(null);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 const firstYoutubeVideo = computed(() => {
   if (!movie.value?.videos?.results) return null;
-  return movie.value.videos.results.find((v: any) => v.site === "YouTube");
+  return movie.value.videos.results.find(({ site }) => site === "YouTube");
 });
 
 const director = computed(() => {
   if (!movie.value?.credits?.crew) return null;
-  return movie.value.credits.crew.find(
-    (person: any) => person.job === "Director"
-  );
+  return movie.value.credits.crew.find(({ job }) => job === "Director");
 });
 
 const castWithDirector = computed(() => {
@@ -192,8 +221,7 @@ const castWithDirector = computed(() => {
   const cast = movie.value.credits.cast;
   const dir = director.value;
   if (!dir) return cast;
-  // Avoid duplicate if director is also in cast
-  const filteredCast = cast.filter((person: any) => person.id !== dir.id);
+  const filteredCast = cast.filter(({ id }) => id !== dir.id);
   return [dir, ...filteredCast];
 });
 
@@ -201,52 +229,106 @@ const currentPage = ref(1);
 const itemsPerPage = 6;
 
 const totalPages = computed(() =>
-  Math.ceil(castWithDirector.value.length / itemsPerPage)
+  castWithDirector.value.length > 0
+    ? Math.ceil(castWithDirector.value.length / itemsPerPage)
+    : 1,
 );
 
-const paginatedCast = computed(() => {
+const paginatedCredits = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   return castWithDirector.value.slice(start, end);
 });
 
+const showPersonModal = ref(false);
+const personId = ref<string | null>(null);
+
+function openPersonModal(id: number) {
+  router.push({
+    name: "person-modal",
+    params: { id: route.params.movieId, personId: id },
+  });
+}
+
+function closePersonModal() {
+  showPersonModal.value = false;
+  personId.value = null;
+  router.replace({ name: "movie-detail", params: { id: route.params.id } });
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    const match = route.name === "person-modal" && route.params.personId;
+    if (match) {
+      personId.value = route.params.personId as string;
+      showPersonModal.value = true;
+    } else {
+      showPersonModal.value = false;
+      personId.value = null;
+    }
+  },
+  { immediate: true },
+);
+
 onMounted(async () => {
   try {
     const response = await fetch(
-      `http://localhost:3000/movies/${route.params.id}`
+      `http://localhost:3000/api/v1/movies/${route.params.movieId}`,
     );
     if (!response.ok) throw new Error("Failed to fetch movie details.");
     const data = await response.json();
     movie.value = data;
-  } catch (e) {
+  } catch {
     error.value = "Failed to fetch movie details.";
   } finally {
     loading.value = false;
   }
 });
+
+const props = defineProps({
+  id: {
+    type: [String, Number],
+    default: null,
+  },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
+});
 </script>
 
 <style scoped>
-.movie-detail {
-  padding: 2rem 0;
+.image-placeholder {
+  width: 200px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 .rating-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.cast-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+.credits {
+  display: flex;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 1rem;
+  margin-left: auto;
+  margin-right: auto;
 }
-.cast-card {
+.credits-card {
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
 }
-.cast-img-wrapper {
+.credits-img-wrapper {
   position: relative;
   width: 100px;
   height: 150px;
@@ -254,11 +336,18 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
 }
-.cast-image {
+.credits-image {
   border-radius: 8px;
-  overflow: hidden;
+  width: 100px;
+  height: 150px;
 }
-.placeholder-img {
+.credits-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+.credits-placeholder {
   width: 100px;
   height: 150px;
   display: flex;

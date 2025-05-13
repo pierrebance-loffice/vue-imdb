@@ -9,11 +9,11 @@
       <v-spacer></v-spacer>
       <v-btn
         :icon="isDark ? 'mdi-weather-night' : 'mdi-white-balance-sunny'"
-        @click="toggleTheme"
         variant="text"
         :aria-label="
           isDark ? 'Activer le mode clair' : 'Activer le mode sombre'
         "
+        @click="toggleTheme"
       />
     </v-app-bar>
 
@@ -41,6 +41,6 @@ watch(
   () => theme.global.current.value.dark,
   (val) => {
     isDark.value = val;
-  }
+  },
 );
 </script>
