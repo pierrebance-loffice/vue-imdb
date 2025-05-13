@@ -148,6 +148,15 @@ The application uses Pinia for state management with the following stores:
   - Pagination
   - Filters
 
+## Screenshots
+
+<div align="center">
+  <img src="img/img-1.png" alt="Screenshot 1" width="800"/>
+  <img src="img/img-2.png" alt="Screenshot 2" width="800"/>
+  <img src="img/img-3.png" alt="Screenshot 3" width="800"/>
+  <img src="img/img-4.png" alt="Screenshot 4" width="800"/>
+</div>
+
 ## Contributing
 
 1. Fork the repository
